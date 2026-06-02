@@ -42,7 +42,7 @@ export function SearchInput({
         }
         newSearchParams.set("page", "1");
         router.push(`?${newSearchParams.toString()}`);
-      }, 300);
+      }, 500);
 
       setDebouncedTimer(timer);
     },
