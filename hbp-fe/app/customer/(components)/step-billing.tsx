@@ -10,6 +10,12 @@ import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { SearchableSelect } from "./searchable-select";
 import { getCountries, getCities } from "@/app/(services)/reference-service";
 import type { Country, City } from "@/app/interfaces";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 
 export const billingSchema = z.object({
   firstName: z.string().min(1, "Required"),
@@ -70,10 +76,6 @@ export function StepBilling({
 
   const handleSubmit = form.handleSubmit((values) => onNext(values));
   const err = form.formState.errors;
-  const errMsg = (name: keyof BillingValues) =>
-    err[name]?.message ? (
-      <p className="text-xs text-destructive mt-0.5">{err[name]!.message}</p>
-    ) : null;
 
   return (
     <div className="space-y-6">
@@ -86,110 +88,136 @@ export function StepBilling({
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">First name</label>
-            <Input placeholder="John" {...form.register("firstName")} />
-            {errMsg("firstName")}
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Last name</label>
-            <Input placeholder="Doe" {...form.register("lastName")} />
-            {errMsg("lastName")}
-          </div>
-        </div>
-
-        {/* Address */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Address line 1</label>
-          <Input placeholder="123 Main St" {...form.register("addressLine1")} />
-          {errMsg("addressLine1")}
-        </div>
-        <div className="space-y-1">
-          <label className="text-sm font-medium">
-            Address line 2{" "}
-            <span className="text-muted-foreground">(optional)</span>
-          </label>
-          <Input placeholder="Suite 4B" {...form.register("addressLine2")} />
-        </div>
-
-        {/* Country + City */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Country</label>
-            {loadingCountries ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground h-9">
-                <Loader2 className="w-3 h-3 animate-spin" /> Loading…
-              </div>
-            ) : (
-              <SearchableSelect
-                value={form.watch("countryUuid") ?? ""}
-                placeholder="Select country"
-                items={countries}
-                onValueChange={(v) =>
-                  form.setValue("countryUuid", v, { shouldValidate: true })
-                }
+        <FieldGroup>
+          <div className="grid grid-cols-2 gap-3">
+            <Field data-invalid={!!err.firstName}>
+              <FieldLabel>First name</FieldLabel>
+              <Input
+                placeholder="John"
+                aria-invalid={!!err.firstName}
+                {...form.register("firstName")}
               />
-            )}
-            {errMsg("countryUuid")}
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium">City</label>
-            {loadingCities ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground h-9">
-                <Loader2 className="w-3 h-3 animate-spin" /> Loading…
-              </div>
-            ) : (
-              <SearchableSelect
-                value={form.watch("cityUuid") ?? ""}
-                placeholder="Select city"
-                items={cities}
-                disabled={!selectedCountryUuid}
-                onValueChange={(v) =>
-                  form.setValue("cityUuid", v, { shouldValidate: true })
-                }
+              <FieldError errors={[err.firstName]} />
+            </Field>
+            <Field data-invalid={!!err.lastName}>
+              <FieldLabel>Last name</FieldLabel>
+              <Input
+                placeholder="Doe"
+                aria-invalid={!!err.lastName}
+                {...form.register("lastName")}
               />
-            )}
-            {errMsg("cityUuid")}
+              <FieldError errors={[err.lastName]} />
+            </Field>
           </div>
-        </div>
 
-        {/* Postal code */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Postal code</label>
-          <Input placeholder="10001" {...form.register("postalCode")} />
-          {errMsg("postalCode")}
-        </div>
+          {/* Address */}
+          <Field data-invalid={!!err.addressLine1}>
+            <FieldLabel>Address line 1</FieldLabel>
+            <Input
+              placeholder="123 Main St"
+              aria-invalid={!!err.addressLine1}
+              {...form.register("addressLine1")}
+            />
+            <FieldError errors={[err.addressLine1]} />
+          </Field>
 
-        {/* Phone */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Phone country</label>
-            {loadingCountries ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground h-9">
-                <Loader2 className="w-3 h-3 animate-spin" /> Loading…
-              </div>
-            ) : (
-              <SearchableSelect
-                value={form.watch("phoneCountryCodeUuid") ?? ""}
-                placeholder="Select country"
-                items={countries}
-                onValueChange={(v) =>
-                  form.setValue("phoneCountryCodeUuid", v, {
-                    shouldValidate: true,
-                  })
-                }
+          <Field>
+            <FieldLabel>
+              Address line 2{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </FieldLabel>
+            <Input placeholder="Suite 4B" {...form.register("addressLine2")} />
+          </Field>
+
+          {/* Country + City */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field data-invalid={!!err.countryUuid}>
+              <FieldLabel>Country</FieldLabel>
+              {loadingCountries ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground h-9">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Loading…
+                </div>
+              ) : (
+                <SearchableSelect
+                  value={form.watch("countryUuid") ?? ""}
+                  placeholder="Select country"
+                  items={countries}
+                  onValueChange={(v) =>
+                    form.setValue("countryUuid", v, { shouldValidate: true })
+                  }
+                />
+              )}
+              <FieldError errors={[err.countryUuid]} />
+            </Field>
+
+            <Field data-invalid={!!err.cityUuid}>
+              <FieldLabel>City</FieldLabel>
+              {loadingCities ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground h-9">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Loading…
+                </div>
+              ) : (
+                <SearchableSelect
+                  value={form.watch("cityUuid") ?? ""}
+                  placeholder="Select city"
+                  items={cities}
+                  disabled={!selectedCountryUuid}
+                  onValueChange={(v) =>
+                    form.setValue("cityUuid", v, { shouldValidate: true })
+                  }
+                />
+              )}
+              <FieldError errors={[err.cityUuid]} />
+            </Field>
+          </div>
+
+          {/* Postal code */}
+          <Field data-invalid={!!err.postalCode}>
+            <FieldLabel>Postal code</FieldLabel>
+            <Input
+              placeholder="10001"
+              aria-invalid={!!err.postalCode}
+              {...form.register("postalCode")}
+            />
+            <FieldError errors={[err.postalCode]} />
+          </Field>
+
+          {/* Phone */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field data-invalid={!!err.phoneCountryCodeUuid}>
+              <FieldLabel>Phone country</FieldLabel>
+              {loadingCountries ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground h-9">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Loading…
+                </div>
+              ) : (
+                <SearchableSelect
+                  value={form.watch("phoneCountryCodeUuid") ?? ""}
+                  placeholder="Select country"
+                  items={countries}
+                  onValueChange={(v) =>
+                    form.setValue("phoneCountryCodeUuid", v, {
+                      shouldValidate: true,
+                    })
+                  }
+                />
+              )}
+              <FieldError errors={[err.phoneCountryCodeUuid]} />
+            </Field>
+
+            <Field data-invalid={!!err.phoneNumber}>
+              <FieldLabel>Phone number</FieldLabel>
+              <Input
+                placeholder="123456789"
+                aria-invalid={!!err.phoneNumber}
+                {...form.register("phoneNumber")}
               />
-            )}
-            {errMsg("phoneCountryCodeUuid")}
+              <FieldError errors={[err.phoneNumber]} />
+            </Field>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Phone number</label>
-            <Input placeholder="123456789" {...form.register("phoneNumber")} />
-            {errMsg("phoneNumber")}
-          </div>
-        </div>
+        </FieldGroup>
 
         <div className="flex gap-3 pt-2">
           <Button

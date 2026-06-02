@@ -20,6 +20,12 @@ import useCartStore from "@/app/(provider)/cart-store";
 import { checkoutCart } from "@/app/(services)/customer-service";
 import type { CheckoutCartData } from "@/app/customer/(schema)/customer-checkout-cart-schema";
 import type { BillingValues } from "./step-billing";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 
 const guestSchema = z.object({
   guestName: z.string().min(1, "Required"),
@@ -158,48 +164,52 @@ export function StepReview({
               </div>
 
               <div className="border-t pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Guest name
-                  </label>
-                  <Input
-                    placeholder="Full name"
-                    {...form.register(`guests.${idx}.guestName`)}
-                  />
-                  {guestErrors?.guestName && (
-                    <p className="text-xs text-destructive">
-                      {guestErrors.guestName.message}
-                    </p>
-                  )}
-                </div>
+                <FieldGroup className="contents">
+                  <Field
+                    className="col-span-1"
+                    data-invalid={!!guestErrors?.guestName}
+                  >
+                    <FieldLabel className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Guest name
+                    </FieldLabel>
+                    <Input
+                      placeholder="Full name"
+                      aria-invalid={!!guestErrors?.guestName}
+                      {...form.register(`guests.${idx}.guestName`)}
+                    />
+                    <FieldError errors={[guestErrors?.guestName]} />
+                  </Field>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Guest email
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="guest@example.com"
-                    {...form.register(`guests.${idx}.guestEmail`)}
-                  />
-                  {guestErrors?.guestEmail && (
-                    <p className="text-xs text-destructive">
-                      {guestErrors.guestEmail.message}
-                    </p>
-                  )}
-                </div>
+                  <Field
+                    className="col-span-1"
+                    data-invalid={!!guestErrors?.guestEmail}
+                  >
+                    <FieldLabel className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Guest email
+                    </FieldLabel>
+                    <Input
+                      type="email"
+                      placeholder="guest@example.com"
+                      aria-invalid={!!guestErrors?.guestEmail}
+                      {...form.register(`guests.${idx}.guestEmail`)}
+                    />
+                    <FieldError errors={[guestErrors?.guestEmail]} />
+                  </Field>
 
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Special requests{" "}
-                    <span className="normal-case">(optional)</span>
-                  </label>
-                  <Textarea
-                    placeholder="Any specific requests..."
-                    rows={2}
-                    {...form.register(`guests.${idx}.specialRequests`)}
-                  />
-                </div>
+                  <Field className="sm:col-span-2">
+                    <FieldLabel className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Special requests{" "}
+                      <span className="normal-case font-normal">
+                        (optional)
+                      </span>
+                    </FieldLabel>
+                    <Textarea
+                      placeholder="Any specific requests..."
+                      rows={2}
+                      {...form.register(`guests.${idx}.specialRequests`)}
+                    />
+                  </Field>
+                </FieldGroup>
               </div>
             </div>
           );

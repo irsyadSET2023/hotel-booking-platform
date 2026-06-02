@@ -13,6 +13,12 @@ import {
   verifyOtp,
 } from "@/app/(services)/customer-service";
 import type { BillingValues } from "./step-billing";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 
 const emailSchema = z.object({ email: z.string().email("Invalid email") });
 const otpSchema = z.object({ code: z.string().min(4).max(8) });
@@ -103,19 +109,21 @@ export function StepEmail({ defaultEmail, onVerified }: StepEmailProps) {
           </div>
 
           <form onSubmit={handleCheckEmail} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Email address</label>
-              <Input
-                type="email"
-                placeholder="you@example.com"
-                {...emailForm.register("email")}
-              />
-              {emailForm.formState.errors.email && (
-                <p className="text-xs text-destructive">
-                  {emailForm.formState.errors.email.message}
-                </p>
-              )}
-            </div>
+            <FieldGroup>
+              <Field data-invalid={!!emailForm.formState.errors.email}>
+                <FieldLabel htmlFor="step-email-input">
+                  Email address
+                </FieldLabel>
+                <Input
+                  id="step-email-input"
+                  type="email"
+                  placeholder="you@example.com"
+                  aria-invalid={!!emailForm.formState.errors.email}
+                  {...emailForm.register("email")}
+                />
+                <FieldError errors={[emailForm.formState.errors.email]} />
+              </Field>
+            </FieldGroup>
 
             {serverError && (
               <p className="text-xs text-destructive flex items-center gap-1">
@@ -141,20 +149,20 @@ export function StepEmail({ defaultEmail, onVerified }: StepEmailProps) {
           </div>
 
           <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">OTP Code</label>
-              <Input
-                type="text"
-                placeholder="Enter code"
-                maxLength={8}
-                {...otpForm.register("code")}
-              />
-              {otpForm.formState.errors.code && (
-                <p className="text-xs text-destructive">
-                  {otpForm.formState.errors.code.message}
-                </p>
-              )}
-            </div>
+            <FieldGroup>
+              <Field data-invalid={!!otpForm.formState.errors.code}>
+                <FieldLabel htmlFor="step-otp-input">OTP Code</FieldLabel>
+                <Input
+                  id="step-otp-input"
+                  type="text"
+                  placeholder="Enter code"
+                  maxLength={8}
+                  aria-invalid={!!otpForm.formState.errors.code}
+                  {...otpForm.register("code")}
+                />
+                <FieldError errors={[otpForm.formState.errors.code]} />
+              </Field>
+            </FieldGroup>
 
             {serverError && (
               <p className="text-xs text-destructive flex items-center gap-1">
