@@ -3,12 +3,11 @@ import { sendError, sendSuccess } from "../../utils/response";
 import { AppError } from "../../utils/app-error";
 import { verifyStripeWebhook } from "../../external-services/payment-gateways/stripe";
 import { confirmPaymentService } from "../../services/customer/confirm-payment.customer.service";
+import { failedOrCancelCustomerPaymentService } from "../../services/customer/failed-customer-payment.service";
 
 export const stripeWebhook = async (c: Context): Promise<Response> => {
   try {
     const rawBody = Buffer.from(await c.req.raw.arrayBuffer());
-
-    console.log("Received Stripe webhook with raw body:", rawBody);
 
     const signature = c.req.header("stripe-signature") as string;
 
@@ -30,48 +29,25 @@ export const stripeWebhook = async (c: Context): Promise<Response> => {
       case "checkout.session.expired": {
         const session = stripeEvent.data.object;
 
-        await confirmPaymentService({
+        await failedOrCancelCustomerPaymentService({
           paymentUuid: session?.metadata?.reference_number as string,
+          status: "CANCELLED",
+        });
+
+        break;
+      }
+
+      case "checkout.session.async_payment_failed": {
+        const session = stripeEvent.data.object;
+
+        await failedOrCancelCustomerPaymentService({
+          paymentUuid: session?.metadata?.reference_number as string,
+          status: "CANCELLED",
         });
 
         break;
       }
     }
-
-    // if (!stripeEvent) {
-    //   throw new AppError("Invalid webhook", 400);
-    // } else {
-    //   await confirmPaymentService({
-    //     paymentUuid: session.metadata.reference_number,
-    //     isSuccess: true,
-    //   });
-    // }
-
-    // if (!stripeEvent) {
-    //   throw new AppError("Invalid webhook", 400);
-    // }
-
-    // switch (stripeEvent.type) {
-    //   case "checkout.session.completed": {
-    //     const session = stripeEvent.data.object;
-
-    //     if (session.payment_status === "paid") {
-    //     }
-
-    //     break;
-    //   }
-
-    //   case "checkout.session.expired": {
-    //     const session = stripeEvent.data.object;
-
-    //     await confirmPaymentService({
-    //       paymentUuid: session.metadata.reference_number,
-    //       isSuccess: false,
-    //     });
-
-    //     break;
-    //   }
-    // }
 
     return sendSuccess(c, null, "Stripe webhook received successfully", 200);
   } catch (error) {

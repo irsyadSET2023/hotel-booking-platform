@@ -14,6 +14,7 @@ import {
 import type { CartItem, Customer } from "../../../generated/prisma";
 import type { checkoutCartSchema } from "../../validators/customer.validator";
 import { z } from "zod";
+import stripeConfig from "../../config/stripe";
 type CartItemWithBasePriceAndHotelId = Omit<
   CartItem,
   "id" | "createdAt" | "updatedAt" | "uuid" | "cartId" | "deletedAt"
@@ -106,8 +107,8 @@ export const checkoutCartService = async ({
     email: result.email,
     description: `Order for room booking with order number ${result.orderUuid}`,
     reference_number: result.paymentUuid,
-    successUrl: `${process.env.FRONTEND_URL}/customer/payment`,
-    cancelUrl: `${process.env.FRONTEND_URL}/customer/payment`,
+    successUrl: stripeConfig.successUrl,
+    cancelUrl: stripeConfig.cancelUrl,
   });
 
   // 3. update payment with stripe session id
