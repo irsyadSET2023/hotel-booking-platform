@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   PaginationPages,
   PaginationToolbar,
@@ -13,14 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2 } from "lucide-react";
+import { Building2, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Room } from "@/app/interfaces";
 import { RoomCard } from "./room-card";
 import { SearchInput } from "@/components/reusable/search-input";
+import { getRoomList } from "@/app/(services)/list-rooms-service";
 
 const ROOM_CATEGORIES = ["Standard", "Deluxe", "Suite"] as const;
+
+const DEFAULT_CHECK_IN = "2026-06-01T00:00:00.000Z";
+const DEFAULT_CHECK_OUT = "2026-06-02T00:00:00.000Z";
 
 /* -------------------- utils -------------------- */
 
@@ -35,55 +40,78 @@ const isValidRange = (start?: string, end?: string) => {
   return new Date(start) <= new Date(end);
 };
 
-/* -------------------- types -------------------- */
-
-interface RoomCardListProps {
-  rooms: Room[];
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
-  pageSize: number;
-  searchTerm: string;
-  roomCategory: string;
-  checkInDate: string;
-  checkOutDate: string;
-}
-
 /* -------------------- component -------------------- */
 
-export function RoomCardList({
-  rooms,
-  currentPage,
-  totalPages,
-  totalCount,
-  pageSize,
-  searchTerm,
-  roomCategory,
-  checkInDate,
-  checkOutDate,
-}: RoomCardListProps) {
+export function RoomCardList() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const page = Number(searchParams.get("page") ?? 1);
+  const pageSize = Number(searchParams.get("pageSize") ?? 10);
+  const searchTerm = searchParams.get("search") ?? "";
+  const roomCategory = searchParams.get("roomCategory") ?? "";
+  const checkInDate = searchParams.get("checkInDate") ?? DEFAULT_CHECK_IN;
+  const checkOutDate = searchParams.get("checkOutDate") ?? DEFAULT_CHECK_OUT;
+
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchRooms = async () => {
+      setIsLoading(true);
+      const { data, success } = await getRoomList(
+        page,
+        pageSize,
+        checkInDate,
+        checkOutDate,
+        searchTerm,
+        roomCategory,
+      );
+
+      if (cancelled) return;
+
+      if (success && data) {
+        setRooms(data.data as Room[]);
+        setTotalPages(data.meta.totalPages);
+        setTotalCount(data.meta.total);
+      } else {
+        setRooms([]);
+        setTotalPages(0);
+        setTotalCount(0);
+      }
+      setIsLoading(false);
+    };
+
+    fetchRooms();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, pageSize, checkInDate, checkOutDate, searchTerm, roomCategory]);
+
+  /* -------------------- URL helpers -------------------- */
 
   const baseParams = () => {
     const params = new URLSearchParams();
-
     params.set("page", "1");
     params.set("pageSize", String(pageSize));
-
     if (searchTerm) params.set("search", searchTerm);
     if (roomCategory) params.set("roomCategory", roomCategory);
     if (checkInDate) params.set("checkInDate", checkInDate);
     if (checkOutDate) params.set("checkOutDate", checkOutDate);
-
     return params;
   };
 
-  const updateQuery = (key: string, value: string) => {
+  const updateQuery = (updates: Record<string, string>) => {
     const params = baseParams();
-
-    if (value) params.set(key, value);
-    else params.delete(key);
-
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
     router.push(`?${params.toString()}`);
   };
 
@@ -92,31 +120,24 @@ export function RoomCardList({
   const handleCheckInChange = (value: string) => {
     const iso = safeDateToISO(value);
     if (!iso) return;
-
-    // reset invalid range
+    const updates: Record<string, string> = { checkInDate: iso };
     if (checkOutDate && !isValidRange(iso, checkOutDate)) {
-      updateQuery("checkOutDate", "");
+      updates.checkOutDate = "";
     }
-
-    updateQuery("checkInDate", iso);
+    updateQuery(updates);
   };
 
   const handleCheckOutChange = (value: string) => {
     const iso = safeDateToISO(value);
-    if (!iso) return;
-
-    if (!isValidRange(checkInDate, iso)) return;
-
-    updateQuery("checkOutDate", iso);
+    if (!iso || !isValidRange(checkInDate, iso)) return;
+    updateQuery({ checkOutDate: iso });
   };
 
-  const handleCategoryChange = (value: string) => {
-    updateQuery("roomCategory", value === "all" ? "" : value);
-  };
+  const handleCategoryChange = (value: string) =>
+    updateQuery({ roomCategory: value === "all" ? "" : value });
 
-  const handlePageSizeChange = (value: string) => {
-    updateQuery("pageSize", value);
-  };
+  const handlePageSizeChange = (value: string) =>
+    updateQuery({ pageSize: value });
 
   /* -------------------- UI -------------------- */
 
@@ -183,14 +204,18 @@ export function RoomCardList({
 
         {/* Toolbar */}
         <PaginationToolbar
-          currentPage={currentPage}
+          currentPage={page}
           pageSize={pageSize}
           totalItems={totalCount}
           onPageSizeChange={handlePageSizeChange}
         />
 
         {/* Content */}
-        {rooms.length > 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : rooms.length > 0 ? (
           <>
             <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {rooms.map((room) => (
@@ -205,23 +230,18 @@ export function RoomCardList({
             </div>
 
             <div className="flex justify-end">
-              <PaginationPages
-                currentPage={currentPage}
-                totalPages={totalPages}
-              />
+              <PaginationPages currentPage={page} totalPages={totalPages} />
             </div>
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Building2 className="w-10 h-10 text-muted-foreground" />
-
             <div className="text-center space-y-1">
               <h3 className="text-lg font-semibold">No rooms found</h3>
               <p className="text-sm text-muted-foreground">
                 Try adjusting filters or search terms.
               </p>
             </div>
-
             <Link href="/rooms">
               <Button>Reset Filters</Button>
             </Link>

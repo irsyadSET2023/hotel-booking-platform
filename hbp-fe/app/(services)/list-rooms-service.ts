@@ -1,3 +1,5 @@
+"use server";
+
 import { parseResponse, requestApi } from "@/lib/utils";
 import { RequestMethod } from "../enums";
 import {
