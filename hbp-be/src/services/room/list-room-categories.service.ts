@@ -146,12 +146,12 @@ export const listRoomCategoriesService = async (
 
       hotel: cat.hotel,
 
-      availability: {
-        totalRooms,
-        reservedRooms,
-        blockedRooms,
-        availableRooms: Math.max(availableRooms, 0),
-      },
+      // availability: {
+      //   totalRooms,
+      //   reservedRooms,
+      //   blockedRooms,
+      //   availableRooms: Math.max(availableRooms, 0),
+      // },
     };
   });
 

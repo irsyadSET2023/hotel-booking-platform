@@ -41,3 +41,14 @@ export interface RequestData<T = unknown> {
   isRefreshToken?: boolean;
   activeOrganizationId?: string;
 }
+
+export interface Room {
+  uuid: string;
+  name: string;
+  basePrice: string;
+  maxOccupancy: number;
+  hotel: {
+    uuid: string;
+    name: string;
+  };
+}

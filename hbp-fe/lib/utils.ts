@@ -26,12 +26,10 @@ export function parseResponse<T>({
 }
 
 export async function requestApi(requestData: RequestData) {
-  let token = null;
-
   try {
     const response = await fetch(`${serverConfig.apiUrl}${requestData.path}`, {
       method: requestData.method,
-      body: JSON.stringify(requestData.data || {}),
+      ...(requestData.data ? { body: JSON.stringify(requestData.data) } : {}),
     });
 
     const responseData = await response.json();

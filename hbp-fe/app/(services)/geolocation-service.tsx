@@ -76,3 +76,55 @@ export async function fetchCountries(
     },
   });
 }
+
+export async function fetchCity(
+  cityUuid: string,
+): Promise<RequestResponse<City | null>> {
+  const response = await requestApi({
+    private: false,
+    path: `/reference/cities/${cityUuid}`,
+    method: RequestMethod.GET,
+  });
+
+  if (!response.success) {
+    return parseResponse({
+      success: false,
+      message: response.message,
+      data: null,
+    });
+  }
+
+  const city = response.data as City;
+
+  return parseResponse({
+    success: response.success,
+    message: response.message,
+    data: city,
+  });
+}
+
+export async function fetchCountry(
+  countryUuid: string,
+): Promise<RequestResponse<Country | null>> {
+  const response = await requestApi({
+    private: false,
+    path: `/reference/countries/${countryUuid}`,
+    method: RequestMethod.GET,
+  });
+
+  if (!response.success) {
+    return parseResponse({
+      success: false,
+      message: response.message,
+      data: null,
+    });
+  }
+
+  const country = response.data as Country;
+
+  return parseResponse({
+    success: response.success,
+    message: response.message,
+    data: country,
+  });
+}

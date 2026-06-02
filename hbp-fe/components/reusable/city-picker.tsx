@@ -17,8 +17,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { fetchCities, fetchCity } from "@/app/(services)/geolocation-service";
 import { City } from "@/app/interfaces";
+import { fetchCities, fetchCity } from "@/app/(services)/geolocation-service";
 
 interface CityPickerProps {
   value?: string; // encrypted_id
@@ -81,19 +81,6 @@ const CityPicker = React.forwardRef<HTMLButtonElement, CityPickerProps>(
       setHasMore(true);
     }, [debouncedSearch]);
 
-    // Reset when state changes
-    //comment to try the city auto display when input postcode
-    //   useEffect(() => {
-    //    setCities([]);
-    //    setPage(1);
-    //    setHasMore(true);
-    //    setSelectedCity(null);
-    //    setInitialValueLoaded(false);
-
-    //    if (!prefetchedCity) {
-    //     onValueChangeRef.current?.("", null);
-    //    }
-    //   }, [countryUuid, prefetchedCity]);
     // Reset when state changes
     useEffect(() => {
       if (!countryUuid) return;
@@ -168,7 +155,7 @@ const CityPicker = React.forwardRef<HTMLButtonElement, CityPickerProps>(
 
             // Check if there are more pages
             const totalPages = Math.ceil(
-              response.data.total / response.data.pageSize,
+              response.data.meta.total / response.data.meta.limit,
             );
             setHasMore(pageNum < totalPages);
             setPage(pageNum);
