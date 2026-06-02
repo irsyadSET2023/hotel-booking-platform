@@ -21,6 +21,7 @@ import { Room } from "@/app/interfaces";
 import { RoomCard } from "./room-card";
 import { SearchInput } from "@/components/reusable/search-input";
 import { getRoomList } from "@/app/(services)/list-rooms-service";
+import { Cart } from "./cart";
 
 const ROOM_CATEGORIES = ["Standard", "Deluxe", "Suite"] as const;
 
@@ -144,11 +145,14 @@ export function RoomCardList() {
   return (
     <div className="w-full max-w mx-auto p-1 space-y-7">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Rooms</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage and view all your rooms here.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Rooms</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage and view all your rooms here.
+          </p>
+        </div>
+        <Cart />
       </div>
 
       <div className="bg-card rounded-xl shadow-sm border p-8 space-y-6">
@@ -221,10 +225,13 @@ export function RoomCardList() {
               {rooms.map((room) => (
                 <RoomCard
                   key={room.uuid}
+                  uuid={room.uuid}
                   name={room.name}
                   hotelName={room.hotel.name}
                   basePrice={room.basePrice}
                   maxOccupancy={room.maxOccupancy}
+                  checkInDate={checkInDate}
+                  checkOutDate={checkOutDate}
                 />
               ))}
             </div>

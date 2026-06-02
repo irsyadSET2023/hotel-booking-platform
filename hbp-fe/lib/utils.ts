@@ -29,7 +29,12 @@ export async function requestApi(requestData: RequestData) {
   try {
     const response = await fetch(`${serverConfig.apiUrl}${requestData.path}`, {
       method: requestData.method,
-      ...(requestData.data ? { body: JSON.stringify(requestData.data) } : {}),
+      ...(requestData.data
+        ? {
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestData.data),
+          }
+        : {}),
     });
 
     const responseData = await response.json();

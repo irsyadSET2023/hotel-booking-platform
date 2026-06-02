@@ -106,8 +106,8 @@ export const checkoutCartService = async ({
     email: result.email,
     description: `Order for room booking with order number ${result.orderUuid}`,
     reference_number: result.paymentUuid,
-    successUrl: `${process.env.FRONTEND_URL}/success`,
-    cancelUrl: `${process.env.FRONTEND_URL}/cancel`,
+    successUrl: `${process.env.FRONTEND_URL}/customer/payment`,
+    cancelUrl: `${process.env.FRONTEND_URL}/customer/payment`,
   });
 
   // 3. update payment with stripe session id
