@@ -20,10 +20,28 @@ import { Room } from "@/app/interfaces";
 import { RoomCard } from "./room-card";
 import { SearchInput } from "@/components/reusable/search-input";
 
+const ROOM_CATEGORIES = ["Standard", "Deluxe", "Suite"] as const;
+
+/* -------------------- utils -------------------- */
+
+const safeDateToISO = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+};
+
+const isValidRange = (start?: string, end?: string) => {
+  if (!start || !end) return true;
+  return new Date(start) <= new Date(end);
+};
+
+/* -------------------- types -------------------- */
+
 interface RoomCardListProps {
   rooms: Room[];
   currentPage: number;
   totalPages: number;
+  totalCount: number;
   pageSize: number;
   searchTerm: string;
   roomCategory: string;
@@ -31,10 +49,13 @@ interface RoomCardListProps {
   checkOutDate: string;
 }
 
+/* -------------------- component -------------------- */
+
 export function RoomCardList({
   rooms,
   currentPage,
   totalPages,
+  totalCount,
   pageSize,
   searchTerm,
   roomCategory,
@@ -51,7 +72,6 @@ export function RoomCardList({
 
     if (searchTerm) params.set("search", searchTerm);
     if (roomCategory) params.set("roomCategory", roomCategory);
-
     if (checkInDate) params.set("checkInDate", checkInDate);
     if (checkOutDate) params.set("checkOutDate", checkOutDate);
 
@@ -60,15 +80,45 @@ export function RoomCardList({
 
   const updateQuery = (key: string, value: string) => {
     const params = baseParams();
-    params.set(key, value);
+
+    if (value) params.set(key, value);
+    else params.delete(key);
+
     router.push(`?${params.toString()}`);
   };
 
-  const handlePageSizeChange = (value: string) => {
-    const params = baseParams();
-    params.set("pageSize", value);
-    router.push(`?${params.toString()}`);
+  /* -------------------- handlers -------------------- */
+
+  const handleCheckInChange = (value: string) => {
+    const iso = safeDateToISO(value);
+    if (!iso) return;
+
+    // reset invalid range
+    if (checkOutDate && !isValidRange(iso, checkOutDate)) {
+      updateQuery("checkOutDate", "");
+    }
+
+    updateQuery("checkInDate", iso);
   };
+
+  const handleCheckOutChange = (value: string) => {
+    const iso = safeDateToISO(value);
+    if (!iso) return;
+
+    if (!isValidRange(checkInDate, iso)) return;
+
+    updateQuery("checkOutDate", iso);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    updateQuery("roomCategory", value === "all" ? "" : value);
+  };
+
+  const handlePageSizeChange = (value: string) => {
+    updateQuery("pageSize", value);
+  };
+
+  /* -------------------- UI -------------------- */
 
   return (
     <div className="w-full max-w mx-auto p-1 space-y-7">
@@ -80,71 +130,54 @@ export function RoomCardList({
         </p>
       </div>
 
-      {/* Main container */}
       <div className="bg-card rounded-xl shadow-sm border p-8 space-y-6">
-        {/* Filters row */}
+        {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Check-in */}
-          <div className="space-y-1">
+          <div>
             <label className="text-sm text-muted-foreground">Check-in</label>
             <Input
               type="date"
               value={checkInDate?.split("T")[0] || ""}
-              onChange={(e) =>
-                updateQuery(
-                  "checkInDate",
-                  new Date(e.target.value).toISOString(),
-                )
-              }
+              onChange={(e) => handleCheckInChange(e.target.value)}
             />
           </div>
 
           {/* Check-out */}
-          <div className="space-y-1">
+          <div>
             <label className="text-sm text-muted-foreground">Check-out</label>
             <Input
               type="date"
               value={checkOutDate?.split("T")[0] || ""}
-              onChange={(e) =>
-                updateQuery(
-                  "checkOutDate",
-                  new Date(e.target.value).toISOString(),
-                )
-              }
+              onChange={(e) => handleCheckOutChange(e.target.value)}
             />
           </div>
 
           {/* Category */}
-          <div className="space-y-1">
+          <div>
             <label className="text-sm text-muted-foreground">Category</label>
-
             <Select
               value={roomCategory || "all"}
-              onValueChange={(value) =>
-                updateQuery("roomCategory", value === "all" ? "" : value)
-              }
+              onValueChange={handleCategoryChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="All categories" />
               </SelectTrigger>
-
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
-                <SelectItem value="Standard">Standard</SelectItem>
-                <SelectItem value="Deluxe">Deluxe</SelectItem>
-                <SelectItem value="Suite">Suite</SelectItem>
+                {ROOM_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           {/* Search */}
-          <div className="space-y-1">
+          <div>
             <label className="text-sm text-muted-foreground">Search</label>
-            <SearchInput
-              value={searchTerm || ""}
-              onChange={(e) => updateQuery("search", e.target.value)}
-              placeholder="Search rooms..."
-            />
+            <SearchInput placeholder="Search rooms..." />
           </div>
         </div>
 
@@ -152,7 +185,7 @@ export function RoomCardList({
         <PaginationToolbar
           currentPage={currentPage}
           pageSize={pageSize}
-          totalItems={totalPages * pageSize}
+          totalItems={totalCount}
           onPageSizeChange={handlePageSizeChange}
         />
 

@@ -21,6 +21,7 @@ export async function getRoomList(
   };
 
   const response = await requestApi(requestData);
+  console.log("API Response for getRoomList:", response);
   if (!response.success) {
     return parseResponse({
       success: false,

@@ -33,12 +33,20 @@ export default async function RoomList({
         rooms={data.data as Room[]}
         currentPage={page}
         totalPages={data.meta.totalPages}
+        totalCount={data.meta.total}
         pageSize={pageSize}
         searchTerm={search}
         roomCategory={roomCategory}
         checkInDate={checkInDate}
         checkOutDate={checkOutDate}
       />
+    );
+  } else {
+    return (
+      <div className="p-4 text-center">
+        <h2 className="text-2xl font-semibold mb-2">No rooms found</h2>
+        <p className="text-muted-foreground">{message}</p>
+      </div>
     );
   }
 }
