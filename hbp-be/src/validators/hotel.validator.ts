@@ -51,3 +51,10 @@ export const toggleHotelAdminParamSchema = z.object({
 export const toggleHotelAdminBodySchema = z.object({
   isActive: z.boolean({ message: "isActive must be a boolean" }),
 });
+
+export const checkAvailableHotelRoomsQuerySchema = z.object({
+  hotelUuid: z.uuid("Invalid hotel identifier"),
+  checkIn: z.coerce.date({ message: "Invalid check-in date" }),
+  checkOut: z.coerce.date({ message: "Invalid check-out date" }),
+  roomCategoryUuid: z.uuid("Invalid room category identifier").optional(),
+});
